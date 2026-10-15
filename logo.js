@@ -3,7 +3,7 @@
   function renderLogo(container) {
     container.textContent = "";
     const img = document.createElement("img");
-    img.src = "logo.png";
+    img.src = "iSynergies (1).png";
     img.alt = "iSynergies Inc. - We make IT possible";
     // Only constrain width; the browser derives height from the file's
     // natural aspect ratio, so square and wide logos both display undistorted.
