@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Client Feedback - Administrator</title>
+  <link rel="stylesheet" href="shared.css">
+  <script src="shared.js"></script>
+  <script src="logo.js"></script>
+  <script src="accounts.js"></script>
+</head>
+<body>
+  <div id="logo"></div>
+
+  <div id="login">
+    <h1>Administrator Login</h1>
+    <p>
+      Username: <input id="loginUser" type="text" size="24" autocomplete="username">
+    </p>
+    <p>
+      Password: <input id="loginPass" type="password" size="24" autocomplete="current-password">
+    </p>
+    <p><button id="loginBtn">Log in</button> <button id="logoutBtn">Log out</button></p>
+    <p id="loginMsg"></p>
+    <p><button id="homeBtn" type="button">Home</button></p>
+  </div>
+
+  <div id="adminUI" hidden>
+    <h1>Administrator Interface (logged in as <span id="whoami"></span>)</h1>
+    <p><a href="index.html">Home</a> | <a href="client.html">Client Interface</a> | <button id="logoutBtn2">Log out</button></p>
+
+    <h2>Submitted Reports</h2>
+    <p id="unread"></p>
+    <ul id="reportList"></ul>
+  </div>
+
+  <script>
+    function formatDateTime(iso) {
+      const d = new Date(iso);
+      return d.toLocaleString();
+    }
+
+    function renderThread(report, viewer) {
+      const ul = document.createElement("ul");
+      for (const msg of report.thread) {
+        const li = document.createElement("li");
+        const prefix = msg.from === "admin" ? "Administrator: " : "Client: ";
+        li.textContent = prefix + msg.text + " (" + formatDateTime(msg.at) + ")";
+        if (viewer === "admin" && msg.at) {
+          const delBtn = document.createElement("button");
+          delBtn.textContent = " Delete";
+          delBtn.addEventListener("click", function () {
+            if (confirm("Delete this reply?")) {
+              deleteReply(report.id, msg.at, msg.from);
+              render();
+            }
+          });
+          li.appendChild(delBtn);
+        }
+        ul.appendChild(li);
+      }
+      if (report.thread.length === 0) {
+        const li = document.createElement("li");
+        li.textContent = "(No conversation yet)";
+        ul.appendChild(li);
+      }
+      return ul;
+    }
+
+    function reportTitle(report) {
+      let text = "Report #" + report.id + " [" + (report.resolved ? "Resolved" : "Unresolved") + "] " + formatDateTime(report.createdAt);
+      if (!isSeen(report.id)) {
+        text += " [UNREAD]";
+      }
+      return text;
+    }
+
+    function updateUnread() {
+      const count = unreadCount();
+      const p = document.getElementById("unread");
+      if (count === 0) {
+        p.textContent = "Unread new reports: 0";
+      } else {
+        p.textContent = "Unread new reports: " + count;
+      }
+    }
+
+    function buildReportItem(report) {
+      const li = document.createElement("li");
+
+      const title = document.createElement("p");
+      title.textContent = reportTitle(report);
+      li.appendChild(title);
+
+      const delReportBtn = document.createElement("button");
+      delReportBtn.textContent = "Delete report";
+      delReportBtn.addEventListener("click", function () {
+        if (confirm("Delete this report and its whole conversation? This cannot be undone.")) {
+          deleteReport(report.id);
+          render();
+        }
+      });
+      const delLine = document.createElement("p");
+      delLine.appendChild(delReportBtn);
+      li.appendChild(delLine);
+
+      // View report details
+      const details = document.createElement("details");
+      const summary = document.createElement("summary");
+      summary.textContent = "View report details";
+      details.appendChild(summary);
+
+      // Opening the report counts as reading it: clears [UNREAD],
+      // updates the counter without a full re-render (which would close it).
+      details.addEventListener("toggle", function () {
+        if (details.open && !isSeen(report.id)) {
+          markSeen(report.id);
+          title.textContent = reportTitle(report);
+          updateUnread();
+        }
+      });
+
+      const bodyLabel = document.createElement("p");
+      bodyLabel.textContent = "Report text:";
+      details.appendChild(bodyLabel);
+
+      const body = document.createElement("p");
+      body.textContent = report.text;
+      details.appendChild(body);
+
+      const threadLabel = document.createElement("p");
+      threadLabel.textContent = "Conversation:";
+      details.appendChild(threadLabel);
+
+      details.appendChild(renderThread(report, "admin"));
+
+      const responseBox = document.createElement("textarea");
+      responseBox.rows = 3;
+      responseBox.cols = 50;
+      details.appendChild(responseBox);
+
+      const responseBtn = document.createElement("button");
+      responseBtn.textContent = "Send";
+      responseBtn.addEventListener("click", function () {
+        const text = responseBox.value.trim();
+        if (text.length === 0) return;
+        addReply(report.id, "admin", text);
+        render();
+      });
+      const sendLine = document.createElement("p");
+      sendLine.appendChild(responseBtn);
+      details.appendChild(sendLine);
+
+      // Resolve controls
+      const resolveLine = document.createElement("p");
+      if (report.resolved) {
+        const markBtn = document.createElement("button");
+        markBtn.textContent = "Mark unresolved";
+        markBtn.addEventListener("click", function () {
+          setResolved(report.id, false);
+          render();
+        });
+        resolveLine.appendChild(markBtn);
+      } else {
+        const markBtn = document.createElement("button");
+        markBtn.textContent = "Mark resolved";
+        markBtn.addEventListener("click", function () {
+          setResolved(report.id, true);
+          render();
+        });
+        resolveLine.appendChild(markBtn);
+      }
+      details.appendChild(resolveLine);
+
+      li.appendChild(details);
+      return li;
+    }
+
+    function render() {
+      const data = loadData();
+      const reportList = document.getElementById("reportList");
+      reportList.textContent = "";
+      const reports = data.reports.slice().reverse();
+      for (const report of reports) {
+        reportList.appendChild(buildReportItem(report));
+      }
+      if (reports.length === 0) {
+        const li = document.createElement("li");
+        li.textContent = "(No reports yet)";
+        reportList.appendChild(li);
+      }
+      updateUnread();
+    }
+
+    // Keep in sync with client page changes
+    onDataChange(render);
+    LGO.renderLogo(document.getElementById("logo"));
+
+    // ---- Login gate ----
+    const loginDiv = document.getElementById("login");
+    const adminUIDiv = document.getElementById("adminUI");
+    const loginMsg = document.getElementById("loginMsg");
+
+    function showLogin() {
+      loginDiv.hidden = false;
+      adminUIDiv.hidden = true;
+      document.getElementById("whoami").textContent = "";
+      loginMsg.textContent = "";
+    }
+
+    function showAdminUI() {
+      loginDiv.hidden = true;
+      adminUIDiv.hidden = false;
+      document.getElementById("whoami").textContent = currentUser();
+      render();
+    }
+
+    async function attemptLogin() {
+      const userEl = document.getElementById("loginUser");
+      const passEl = document.getElementById("loginPass");
+      const user = userEl.value.trim();
+      const pass = passEl.value;
+      if (user.length === 0 || pass.length === 0) {
+        loginMsg.textContent = "Enter both username and password.";
+        return;
+      }
+      const matched = await checkAdminCredentials(user, pass);
+      if (matched) {
+        startAdminSession(matched);
+        userEl.value = "";
+        passEl.value = "";
+        loginMsg.textContent = "";
+        showAdminUI();
+      } else {
+        loginMsg.textContent = "Wrong username or password.";
+        passEl.value = "";
+      }
+    }
+
+    document.getElementById("loginBtn").addEventListener("click", attemptLogin);
+    document.getElementById("loginPass").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") attemptLogin();
+    });
+    document.getElementById("logoutBtn").addEventListener("click", function () { endAdminSession(); showLogin(); });
+    document.getElementById("logoutBtn2").addEventListener("click", function () { endAdminSession(); showLogin(); });
+    document.getElementById("homeBtn").addEventListener("click", function () { window.location.href = "index.html"; });
+
+    // Start state: logged in? show admin UI; otherwise show login.
+    if (adminSessionActive()) {
+      showAdminUI();
+    } else {
+      showLogin();
+    }
+  </script>
+</body>
+</html>

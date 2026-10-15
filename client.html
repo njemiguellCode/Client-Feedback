@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Client Feedback - Client</title>
+  <link rel="stylesheet" href="shared.css">
+  <script src="shared.js"></script>
+  <script src="logo.js"></script>
+</head>
+<body>
+  <div id="logo"></div>
+  <h1>Client Feedback</h1>
+  <p><a href="index.html">Home</a> | <a href="admin.html">Administrator Interface</a></p>
+
+  <h2>Submit Feedback or Bug Report</h2>
+  <p>
+    <textarea id="newReport" rows="4" cols="60"></textarea>
+  </p>
+  <p><button id="submitBtn">Submit</button></p>
+
+  <h2>Your Reports</h2>
+  <ul id="reportList"></ul>
+
+  <h2>FAQ</h2>
+  <h3>How do I submit a report?</h3>
+  <p>Type your feedback or bug description in the box under "Submit Feedback or Bug Report" and click Submit.</p>
+
+  <h3>How do I see the administrator's response?</h3>
+  <p>Responses appear in your report's conversation under "Your Reports".</p>
+
+  <h3>Can I reply to a response?</h3>
+  <p>Yes. Type a reply in your report's reply box and click Reply. Accessible only inside the report conversation, this informs administrators of your continued feedback.</p>
+
+  <h3>What does "Resolved" mean?</h3>
+  <p>Administration has marked the report as handled.</p>
+
+  <h3>Why is my report unanswered?</h3>
+  <p>Responses are written by administrators. Check back after they review your report.</p>
+
+  <h3>Can I delete a report or a reply?</h3>
+  <p>Yes. Every report has a Delete report button, and your own replies have a Delete button. Deleted items cannot be restored.</p>
+
+  <script>
+    // Rendering functions
+    function formatDateTime(iso) {
+      const d = new Date(iso);
+      return d.toLocaleString();
+    }
+
+    function renderThread(report, viewer) {
+      const ul = document.createElement("ul");
+      for (const msg of report.thread) {
+        const li = document.createElement("li");
+        let prefix = "";
+        if (msg.from === "admin") {
+          prefix = "Administrator: ";
+        } else {
+          prefix = "You: ";
+        }
+        li.textContent = prefix + msg.text;
+        if (msg.at) {
+          li.textContent += " (" + formatDateTime(msg.at) + ")";
+        }
+        if (viewer === "client" && msg.from === "client" && msg.at) {
+          const delBtn = document.createElement("button");
+          delBtn.textContent = " Delete";
+          delBtn.addEventListener("click", function () {
+            if (confirm("Delete this reply?")) {
+              deleteReply(report.id, msg.at, msg.from);
+              render();
+            }
+          });
+          li.appendChild(delBtn);
+        }
+        ul.appendChild(li);
+      }
+      if (report.thread.length === 0) {
+        const li = document.createElement("li");
+        li.textContent = "(No conversation yet)";
+        ul.appendChild(li);
+      }
+      return ul;
+    }
+
+    function buildReportItem(report) {
+      const li = document.createElement("li");
+
+      const title = document.createElement("p");
+      title.textContent = "Report #" + report.id + " [" + (report.resolved ? "Resolved" : "Unresolved") + "] " + formatDateTime(report.createdAt);
+      li.appendChild(title);
+
+      const body = document.createElement("p");
+      body.textContent = report.text;
+      li.appendChild(body);
+
+      const delReportBtn = document.createElement("button");
+      delReportBtn.textContent = "Delete report";
+      delReportBtn.addEventListener("click", function () {
+        if (confirm("Delete this report and its whole conversation? This cannot be undone.")) {
+          deleteReport(report.id);
+          render();
+        }
+      });
+      const delLine = document.createElement("p");
+      delLine.appendChild(delReportBtn);
+      li.appendChild(delLine);
+
+      li.appendChild(renderThread(report, "client"));
+
+      const replyBox = document.createElement("textarea");
+      replyBox.rows = 2;
+      replyBox.cols = 50;
+      li.appendChild(replyBox);
+
+      const replyBtn = document.createElement("button");
+      replyBtn.textContent = "Send";
+      replyBtn.addEventListener("click", function () {
+        const text = replyBox.value.trim();
+        if (text.length === 0) return;
+        addReply(report.id, "client", text);
+        render();
+      });
+      const replyLine = document.createElement("p");
+      replyLine.appendChild(replyBtn);
+      li.appendChild(replyLine);
+
+      return li;
+    }
+
+    function render() {
+      const data = loadData();
+
+      // Report list
+      const reportList = document.getElementById("reportList");
+      reportList.textContent = "";
+      const reports = data.reports.slice().reverse();
+      for (const report of reports) {
+        reportList.appendChild(buildReportItem(report));
+      }
+      if (reports.length === 0) {
+        const li = document.createElement("li");
+        li.textContent = "(No reports yet)";
+        reportList.appendChild(li);
+      }
+    }
+
+    // Submit new report
+    document.getElementById("submitBtn").addEventListener("click", function () {
+      const box = document.getElementById("newReport");
+      const text = box.value.trim();
+      if (text.length === 0) return;
+      addReport(text);
+      box.value = "";
+      render();
+    });
+
+    // Keep in sync with admin page changes
+    onDataChange(render);
+    LGO.renderLogo(document.getElementById("logo"));
+    render();
+  </script>
+</body>
+</html>

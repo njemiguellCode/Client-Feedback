@@ -1,0 +1,102 @@
+* { box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px 20px 64px;
+  line-height: 1.5;
+  color: #111;
+}
+
+#logo { margin-bottom: 4px; }
+#logo img { display: block; margin: 0 auto; }
+
+h1 {
+  font-size: 1.5rem;
+  margin: 12px 0 6px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #222;
+}
+
+h2 {
+  font-size: 1.1rem;
+  margin: 32px 0 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #ddd;
+}
+
+h3 {
+  font-size: 1rem;
+  margin: 20px 0 4px;
+}
+
+p { margin: 6px 0; }
+
+textarea {
+  display: block;
+  font: inherit;
+  color: inherit;
+  width: 100%;
+  max-width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #999;
+  border-radius: 4px;
+  background: #fff;
+  resize: vertical;
+}
+
+button {
+  font: inherit;
+  padding: 6px 14px;
+  border: 1px solid #777;
+  border-radius: 4px;
+  background: #f4f4f4;
+  cursor: pointer;
+}
+
+button:active { background: #e2e2e2; }
+
+ul { margin: 8px 0; padding-left: 22px; }
+
+/* Report list: thin separators instead of a wall of nested bullets */
+#reportList > li {
+  border-bottom: 1px solid #e5e5e5;
+  padding: 12px 0;
+}
+
+#reportList > li > p:first-child {
+  font-weight: 600;
+  margin-top: 0;
+}
+
+/* Conversation replies get a subtle left indent */
+li ul {
+  margin: 6px 0 10px;
+  padding-left: 18px;
+}
+
+li ul li { margin: 4px 0; }
+
+details {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px 14px;
+  margin: 8px 0;
+  background: #fafafa;
+}
+
+summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+summary + p { margin-top: 8px; }
+
+/* Inline Delete button after reply text */
+li button, p button { margin-left: 6px; }
+
+#unread {
+  font-weight: 600;
+  margin: 8px 0 12px;
+}
