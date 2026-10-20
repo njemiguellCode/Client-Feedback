@@ -1,20 +1,100 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Client Feedback</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Client Feedback Portal — iSynergies</title>
+  <link rel="icon" href="iSynergies (1).png">
   <link rel="stylesheet" href="shared.css">
-  <script src="shared.js"></script>
   <script src="logo.js"></script>
 </head>
 <body>
-  <div id="logo"></div>
-  <h1>Client Feedback</h1>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-logo" id="logo"></span>
+        <span class="brand-text">
+          <strong>iSynergies</strong>
+          <span>Client Feedback System</span>
+        </span>
+      </a>
+      <nav class="navlinks" aria-label="Primary">
+        <a href="client.html">Client</a>
+        <a href="admin.html">Administrator</a>
+      </nav>
+    </div>
+  </header>
 
-  <p><a href="client.html">Client Interface</a> | <a href="admin.html">Administrator Interface</a></p>
+  <main class="wrap centered">
+    <div class="page-head">
+      <p class="eyebrow">iSynergies · Support</p>
+      <h1>Client Feedback Portal</h1>
+      <p class="sub">Report a bug or send feedback, then follow the conversation with our team. Choose a portal below.</p>
+    </div>
+
+    <div class="portal-grid">
+      <a class="tile" href="client.html">
+        <span class="tile-icon" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="3.6"></circle>
+            <path d="M4.8 20a7.2 7.2 0 0 1 14.4 0"></path>
+          </svg>
+        </span>
+        <h2>Client Portal</h2>
+        <p>Go to Client Interface</p>
+      </a>
+
+      <a class="tile" href="admin.html">
+        <span class="tile-icon" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="5" y="10.5" width="14" height="9.5" rx="2"></rect>
+            <path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"></path>
+          </svg>
+        </span>
+        <h2>Admin Console</h2>
+        <p>Go to Admin Login</p>
+      </a>
+    </div>
+
+    <section class="card stack" aria-labelledby="howTitle">
+      <div class="card-head">
+        <h2 id="howTitle">FAQ / How it works</h2>
+      </div>
+      <div class="faq">
+        <details>
+          <summary>How do I send feedback or report a bug?</summary>
+          <p>Open the Client Portal, choose the project, set the report type to Bug or Feedback, describe the issue and select Submit Report. The first line of the description becomes the report title.</p>
+        </details>
+        <details>
+          <summary>Where do I see the administrator's response?</summary>
+          <p>Responses appear under My Feedback History in the Client Portal, inside the Discussion for your report. A NEW badge marks reports with an administrator reply you have not opened yet.</p>
+        </details>
+        <details>
+          <summary>Can I reply to a response?</summary>
+          <p>Yes. Expand the report's Discussion, type your reply and select Send. The administrator sees your message on the same report.</p>
+        </details>
+        <details>
+          <summary>Who can see my reports?</summary>
+          <p>Reports are stored in this browser and shown in the Client Portal and the Administrator Dashboard. The administrator interface requires a sign-in.</p>
+        </details>
+        <details>
+          <summary>What does "Resolved" mean?</summary>
+          <p>The administrator has marked the report as handled. Resolved reports stay in your history and can still be discussed.</p>
+        </details>
+        <details>
+          <summary>How does the administrator sign in?</summary>
+          <p>Open the Admin Console and use your administrator username and password. The session is remembered in this browser until you log out.</p>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">iSynergies Inc. — We make IT possible</div>
+  </footer>
 
   <script>
-    LGO.renderLogo(document.getElementById("logo"));
+    LGO.renderLogo(document.getElementById("logo"), 32);
   </script>
 </body>
 </html>

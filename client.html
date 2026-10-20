@@ -1,162 +1,405 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Client Feedback - Client</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Client Feedback — iSynergies</title>
+  <link rel="icon" href="iSynergies (1).png">
   <link rel="stylesheet" href="shared.css">
   <script src="shared.js"></script>
   <script src="logo.js"></script>
 </head>
 <body>
-  <div id="logo"></div>
-  <h1>Client Feedback</h1>
-  <p><a href="index.html">Home</a> | <a href="admin.html">Administrator Interface</a></p>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-logo" id="logo"></span>
+        <span class="brand-text">
+          <strong>iSynergies</strong>
+          <span>Client Feedback System</span>
+        </span>
+      </a>
+      <nav class="navlinks" aria-label="Primary">
+        <a href="index.html">Home</a>
+        <a href="admin.html">Administrator</a>
+      </nav>
+    </div>
+  </header>
 
-  <h2>Submit Feedback or Bug Report</h2>
-  <p>
-    <textarea id="newReport" rows="4" cols="60"></textarea>
-  </p>
-  <p><button id="submitBtn">Submit</button></p>
+  <main class="wrap">
+    <div class="page-head">
+      <p class="eyebrow">iSynergies · Client</p>
+      <h1>Client Feedback</h1>
+      <p class="sub">Submit a bug or feedback, then follow up in the discussion for each report.</p>
+    </div>
 
-  <h2>Your Reports</h2>
-  <ul id="reportList"></ul>
+    <div class="client-grid">
+      <div>
+        <section class="card" aria-labelledby="submitTitle">
+          <div class="card-head">
+            <h2 id="submitTitle">Submit a New Report</h2>
+          </div>
+          <form id="reportForm" novalidate>
+            <div class="field">
+              <label for="project">Project</label>
+              <select id="project" name="project"></select>
+            </div>
 
-  <h2>FAQ</h2>
-  <h3>How do I submit a report?</h3>
-  <p>Type your feedback or bug description in the box under "Submit Feedback or Bug Report" and click Submit.</p>
+            <div class="field">
+              <span class="field-label" id="typeLabel">Report Type</span>
+              <label class="switch" for="typeToggle" aria-labelledby="typeLabel">
+                <input type="checkbox" id="typeToggle" name="type">
+                <span class="switch-track" aria-hidden="true"></span>
+                <span class="switch-text" id="typeText">Bug</span>
+              </label>
+              <p class="hint">Off for a bug report, on for general feedback.</p>
+            </div>
 
-  <h3>How do I see the administrator's response?</h3>
-  <p>Responses appear in your report's conversation under "Your Reports".</p>
+            <div class="field">
+              <label for="description">Description</label>
+              <textarea id="description" name="description" rows="6" placeholder="Describe the issue or your feedback. First line becomes the title."></textarea>
+            </div>
 
-  <h3>Can I reply to a response?</h3>
-  <p>Yes. Type a reply in your report's reply box and click Reply. Accessible only inside the report conversation, this informs administrators of your continued feedback.</p>
+            <button class="btn btn-primary btn-block" type="submit">Submit Report</button>
+            <p class="hint" id="formMsg" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+      </div>
 
-  <h3>What does "Resolved" mean?</h3>
-  <p>Administration has marked the report as handled.</p>
+      <div>
+        <section class="card" aria-labelledby="historyTitle">
+          <div class="card-head">
+            <h2 id="historyTitle">My Feedback History</h2>
+          </div>
+          <div id="history"></div>
+        </section>
+      </div>
+    </div>
 
-  <h3>Why is my report unanswered?</h3>
-  <p>Responses are written by administrators. Check back after they review your report.</p>
+    <div class="two-col">
+      <section class="card" aria-labelledby="responsesTitle">
+        <div class="card-head">
+          <h2 id="responsesTitle">Responses From Administration</h2>
+        </div>
+        <div id="responses"></div>
+      </section>
 
-  <h3>Can I delete a report or a reply?</h3>
-  <p>Yes. Every report has a Delete report button, and your own replies have a Delete button. Deleted items cannot be restored.</p>
+      <section class="card" aria-labelledby="clientFaqTitle">
+        <div class="card-head">
+          <h2 id="clientFaqTitle">FAQ</h2>
+        </div>
+        <div class="faq">
+          <details>
+            <summary>How do I submit a report?</summary>
+            <p>Choose the project, set the report type, write your description and select Submit Report.</p>
+          </details>
+          <details>
+            <summary>How do I see the administrator's response?</summary>
+            <p>Open the Discussion inside the report under My Feedback History, or check Responses From Administration.</p>
+          </details>
+          <details>
+            <summary>Can I reply to a response?</summary>
+            <p>Yes. Expand the report's Discussion, type your reply and select Send reply.</p>
+          </details>
+          <details>
+            <summary>What does "Resolved" mean?</summary>
+            <p>The administrator has marked the report as handled.</p>
+          </details>
+          <details>
+            <summary>Why is my report unanswered?</summary>
+            <p>Responses are written by administrators. Check back after they review your report.</p>
+          </details>
+          <details>
+            <summary>Can I delete a report or a reply?</summary>
+            <p>Yes. Each report has a Delete report action, and your own replies have a Delete button. Deleted items cannot be restored.</p>
+          </details>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">iSynergies Inc. — We make IT possible</div>
+  </footer>
 
   <script>
-    // Rendering functions
-    function formatDateTime(iso) {
-      const d = new Date(iso);
-      return d.toLocaleString();
+    // Reports whose Discussion is open, so a re-render does not close it.
+    const openReports = new Set();
+
+    const projectSelect = document.getElementById("project");
+    const typeToggle = document.getElementById("typeToggle");
+    const typeText = document.getElementById("typeText");
+    const descriptionBox = document.getElementById("description");
+    const formMsg = document.getElementById("formMsg");
+
+    function populateProjects() {
+      projectSelect.textContent = "";
+      for (const project of PROJECTS) {
+        const option = document.createElement("option");
+        option.value = project;
+        option.textContent = project;
+        projectSelect.appendChild(option);
+      }
     }
 
-    function renderThread(report, viewer) {
-      const ul = document.createElement("ul");
-      for (const msg of report.thread) {
-        const li = document.createElement("li");
-        let prefix = "";
-        if (msg.from === "admin") {
-          prefix = "Administrator: ";
+    function currentType() {
+      return typeToggle.checked ? "feedback" : "bug";
+    }
+
+    function syncTypeText() {
+      typeText.textContent = typeToggle.checked ? "Feedback" : "Bug";
+    }
+
+    function previewText(text) {
+      const singleLine = String(text).replace(/\s+/g, " ").trim();
+      return singleLine.length > 110
+        ? singleLine.slice(0, 110).trimEnd() + "\u2026"
+        : singleLine;
+    }
+
+    function buildReportCard(report) {
+      const card = document.createElement("article");
+      card.className = "report-card";
+
+      const head = document.createElement("div");
+      head.className = "report-head";
+
+      const heading = document.createElement("div");
+      const title = document.createElement("h3");
+      title.className = "report-title";
+      title.textContent = reportTitle(report);
+      heading.appendChild(title);
+
+      const meta = document.createElement("p");
+      meta.className = "meta";
+      meta.textContent =
+        reportProject(report) +
+        " \u00b7 " +
+        reportTypeLabel(report) +
+        " \u00b7 " +
+        formatDateTime(report.createdAt);
+      heading.appendChild(meta);
+      head.appendChild(heading);
+
+      const pills = document.createElement("div");
+      pills.className = "pills";
+      const status = document.createElement("span");
+      status.className = "pill " + (report.resolved ? "pill-resolved" : "pill-open");
+      status.textContent = report.resolved ? "Resolved" : "Open";
+      pills.appendChild(status);
+
+      let newPill = null;
+      if (hasNewAdminReply(report)) {
+        newPill = document.createElement("span");
+        newPill.className = "pill pill-new";
+        newPill.textContent = "NEW";
+        pills.appendChild(newPill);
+      }
+      head.appendChild(pills);
+      card.appendChild(head);
+
+      const latest = latestAdminMessage(report);
+      if (latest) {
+        const preview = document.createElement("p");
+        preview.className = "report-preview";
+        const label = document.createElement("strong");
+        label.textContent = "Administrator: ";
+        preview.appendChild(label);
+        preview.appendChild(document.createTextNode(previewText(latest.text)));
+        card.appendChild(preview);
+      }
+
+      const details = document.createElement("details");
+      details.className = "discussion";
+      if (openReports.has(report.id)) details.open = true;
+
+      const summary = document.createElement("summary");
+      summary.textContent = "Discussion (" + report.thread.length + ")";
+      details.appendChild(summary);
+
+      // If the discussion is already open when rendered, the client has
+      // effectively read the latest administrator reply.
+      if (details.open) {
+        markClientSeen(report);
+        if (newPill) {
+          newPill.remove();
+          newPill = null;
+        }
+      }
+
+      details.addEventListener("toggle", function () {
+        if (details.open) {
+          openReports.add(report.id);
+          markClientSeen(report);
+          if (newPill) {
+            newPill.remove();
+            newPill = null;
+          }
         } else {
-          prefix = "You: ";
+          openReports.delete(report.id);
         }
-        li.textContent = prefix + msg.text;
-        if (msg.at) {
-          li.textContent += " (" + formatDateTime(msg.at) + ")";
-        }
-        if (viewer === "client" && msg.from === "client" && msg.at) {
-          const delBtn = document.createElement("button");
-          delBtn.textContent = " Delete";
-          delBtn.addEventListener("click", function () {
-            if (confirm("Delete this reply?")) {
-              deleteReply(report.id, msg.at, msg.from);
-              render();
-            }
-          });
-          li.appendChild(delBtn);
-        }
-        ul.appendChild(li);
-      }
-      if (report.thread.length === 0) {
-        const li = document.createElement("li");
-        li.textContent = "(No conversation yet)";
-        ul.appendChild(li);
-      }
-      return ul;
-    }
+      });
 
-    function buildReportItem(report) {
-      const li = document.createElement("li");
-
-      const title = document.createElement("p");
-      title.textContent = "Report #" + report.id + " [" + (report.resolved ? "Resolved" : "Unresolved") + "] " + formatDateTime(report.createdAt);
-      li.appendChild(title);
-
-      const body = document.createElement("p");
-      body.textContent = report.text;
-      li.appendChild(body);
-
-      const delReportBtn = document.createElement("button");
-      delReportBtn.textContent = "Delete report";
-      delReportBtn.addEventListener("click", function () {
-        if (confirm("Delete this report and its whole conversation? This cannot be undone.")) {
-          deleteReport(report.id);
+      const thread = buildThreadList(report, "client", function (message) {
+        if (confirm("Delete this reply?")) {
+          deleteReply(report.id, message.at, message.from);
+          openReports.add(report.id);
           render();
         }
       });
-      const delLine = document.createElement("p");
-      delLine.appendChild(delReportBtn);
-      li.appendChild(delLine);
+      details.appendChild(thread);
 
-      li.appendChild(renderThread(report, "client"));
+      const replyLabel = document.createElement("label");
+      replyLabel.className = "visually-hidden";
+      replyLabel.htmlFor = "reply-" + report.id;
+      replyLabel.textContent = "Reply to administrator";
+      details.appendChild(replyLabel);
 
       const replyBox = document.createElement("textarea");
+      replyBox.id = "reply-" + report.id;
       replyBox.rows = 2;
-      replyBox.cols = 50;
-      li.appendChild(replyBox);
+      replyBox.placeholder = "Reply to administration\u2026";
+      details.appendChild(replyBox);
 
       const replyBtn = document.createElement("button");
-      replyBtn.textContent = "Send";
+      replyBtn.type = "button";
+      replyBtn.className = "btn btn-secondary btn-sm";
+      replyBtn.textContent = "Send reply";
+      replyBtn.style.marginTop = "8px";
       replyBtn.addEventListener("click", function () {
         const text = replyBox.value.trim();
-        if (text.length === 0) return;
+        if (text.length === 0) {
+          replyBox.focus();
+          return;
+        }
         addReply(report.id, "client", text);
+        openReports.add(report.id);
         render();
       });
-      const replyLine = document.createElement("p");
-      replyLine.appendChild(replyBtn);
-      li.appendChild(replyLine);
+      details.appendChild(replyBtn);
+      card.appendChild(details);
 
-      return li;
+      const actions = document.createElement("div");
+      actions.className = "report-actions";
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "btn btn-danger-ghost btn-sm";
+      deleteBtn.textContent = "Delete report";
+      deleteBtn.addEventListener("click", function () {
+        if (
+          confirm(
+            "Delete this report and its whole conversation? This cannot be undone."
+          )
+        ) {
+          deleteReport(report.id);
+          openReports.delete(report.id);
+          render();
+        }
+      });
+      actions.appendChild(deleteBtn);
+      card.appendChild(actions);
+
+      return card;
+    }
+
+    function renderHistory() {
+      const container = document.getElementById("history");
+      container.textContent = "";
+
+      const reports = loadData().reports.slice().reverse();
+      if (reports.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "empty";
+        empty.textContent = "No reports yet. Submit one using the form.";
+        container.appendChild(empty);
+        return;
+      }
+
+      for (const report of reports) {
+        container.appendChild(buildReportCard(report));
+      }
+    }
+
+    function renderResponses() {
+      const container = document.getElementById("responses");
+      container.textContent = "";
+
+      const items = [];
+      for (const report of loadData().reports) {
+        for (const message of report.thread) {
+          if (message.from === "admin") items.push({ report: report, message: message });
+        }
+      }
+      items.sort(function (a, b) {
+        return new Date(b.message.at) - new Date(a.message.at);
+      });
+
+      if (items.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "empty";
+        empty.textContent = "No responses yet.";
+        container.appendChild(empty);
+        return;
+      }
+
+      const list = document.createElement("ul");
+      list.className = "thread";
+      for (const item of items) {
+        const entry = document.createElement("li");
+        entry.className = "msg msg-admin";
+
+        const head = document.createElement("div");
+        head.className = "msg-head";
+        const author = document.createElement("span");
+        author.className = "msg-author";
+        author.textContent = "Administrator";
+        head.appendChild(author);
+        const time = document.createElement("span");
+        time.textContent = formatDateTime(item.message.at);
+        head.appendChild(time);
+        entry.appendChild(head);
+
+        const text = document.createElement("p");
+        text.className = "msg-text";
+        text.textContent = item.message.text;
+        entry.appendChild(text);
+
+        const subject = document.createElement("p");
+        subject.className = "meta";
+        subject.style.marginTop = "6px";
+        subject.textContent = "Re: " + reportTitle(item.report);
+        entry.appendChild(subject);
+
+        list.appendChild(entry);
+      }
+      container.appendChild(list);
     }
 
     function render() {
-      const data = loadData();
-
-      // Report list
-      const reportList = document.getElementById("reportList");
-      reportList.textContent = "";
-      const reports = data.reports.slice().reverse();
-      for (const report of reports) {
-        reportList.appendChild(buildReportItem(report));
-      }
-      if (reports.length === 0) {
-        const li = document.createElement("li");
-        li.textContent = "(No reports yet)";
-        reportList.appendChild(li);
-      }
+      renderHistory();
+      renderResponses();
     }
 
-    // Submit new report
-    document.getElementById("submitBtn").addEventListener("click", function () {
-      const box = document.getElementById("newReport");
-      const text = box.value.trim();
-      if (text.length === 0) return;
-      addReport(text);
-      box.value = "";
+    document.getElementById("reportForm").addEventListener("submit", function (event) {
+      event.preventDefault();
+      const text = descriptionBox.value.trim();
+      if (text.length === 0) {
+        formMsg.textContent = "Add a description before submitting.";
+        descriptionBox.focus();
+        return;
+      }
+      addReport(text, projectSelect.value, currentType());
+      descriptionBox.value = "";
+      formMsg.textContent = "Report submitted.";
       render();
     });
 
-    // Keep in sync with admin page changes
+    typeToggle.addEventListener("change", syncTypeText);
+
     onDataChange(render);
-    LGO.renderLogo(document.getElementById("logo"));
+    populateProjects();
+    syncTypeText();
+    LGO.renderLogo(document.getElementById("logo"), 32);
     render();
   </script>
 </body>

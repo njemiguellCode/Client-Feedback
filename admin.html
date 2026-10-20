@@ -1,216 +1,520 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Client Feedback - Administrator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Administrator — iSynergies Client Feedback</title>
+  <link rel="icon" href="iSynergies (1).png">
   <link rel="stylesheet" href="shared.css">
   <script src="shared.js"></script>
   <script src="logo.js"></script>
   <script src="accounts.js"></script>
 </head>
 <body>
-  <div id="logo"></div>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-logo" id="logo"></span>
+        <span class="brand-text">
+          <strong>iSynergies</strong>
+          <span>Client Feedback System</span>
+        </span>
+      </a>
+      <nav class="navlinks" aria-label="Primary">
+        <a href="index.html">Home</a>
+        <a href="client.html">Client</a>
+      </nav>
+    </div>
+  </header>
 
-  <div id="login">
-    <h1>Administrator Login</h1>
-    <p>
-      Username: <input id="loginUser" type="text" size="24" autocomplete="username">
-    </p>
-    <p>
-      Password: <input id="loginPass" type="password" size="24" autocomplete="current-password">
-    </p>
-    <p><button id="loginBtn">Log in</button> <button id="logoutBtn">Log out</button></p>
-    <p id="loginMsg"></p>
-    <p><button id="homeBtn" type="button">Home</button></p>
-  </div>
+  <!-- Logged out -->
+  <main class="wrap" id="loginView">
+    <div class="login-wrap">
+      <section class="card login-card" aria-labelledby="loginTitle">
+        <div class="card-head">
+          <h1 id="loginTitle">Administrator Login</h1>
+        </div>
+        <form id="loginForm" novalidate>
+          <div class="field">
+            <label for="loginUser">Username</label>
+            <input id="loginUser" type="text" autocomplete="username" autocapitalize="none" spellcheck="false">
+          </div>
+          <div class="field">
+            <label for="loginPass">Password</label>
+            <input id="loginPass" type="password" autocomplete="current-password">
+          </div>
+          <button class="btn btn-primary btn-block" type="submit">Log in</button>
+          <p class="hint" id="loginMsg" role="alert" aria-live="assertive"></p>
+        </form>
+        <p class="hint" style="margin-top:18px"><a href="index.html">Back to portal</a></p>
+      </section>
+    </div>
+  </main>
 
-  <div id="adminUI" hidden>
-    <h1>Administrator Interface (logged in as <span id="whoami"></span>)</h1>
-    <p><a href="index.html">Home</a> | <a href="client.html">Client Interface</a> | <button id="logoutBtn2">Log out</button></p>
+  <!-- Logged in -->
+  <main class="wrap" id="adminView" hidden>
+    <div class="notice" id="notice" hidden>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"></path>
+        <path d="M10 19a2.2 2.2 0 0 0 4 0"></path>
+      </svg>
+      <span id="noticeText"></span>
+      <button class="notice-close" id="noticeClose" type="button" aria-label="Dismiss notifications">&times;</button>
+    </div>
 
-    <h2>Submitted Reports</h2>
-    <p id="unread"></p>
-    <ul id="reportList"></ul>
-  </div>
+    <header class="admin-head">
+      <span class="avatar" id="avatar" aria-hidden="true">A</span>
+      <div>
+        <h1>Administrator Dashboard</h1>
+        <p class="meta">Signed in as <span id="whoami"></span></p>
+      </div>
+      <div class="who">
+        <button class="btn btn-secondary btn-sm" id="logoutBtn" type="button">Log out</button>
+      </div>
+    </header>
+
+    <div class="admin-grid">
+      <aside>
+        <nav class="sidenav" aria-label="Report filters">
+          <button type="button" data-filter="all" aria-current="true">
+            All Reports <span class="count" data-count="all">0</span>
+          </button>
+          <button type="button" data-filter="open">
+            Open <span class="count" data-count="open">0</span>
+          </button>
+          <button type="button" data-filter="resolved">
+            Resolved <span class="count" data-count="resolved">0</span>
+          </button>
+          <button type="button" data-filter="unread">
+            Unread <span class="count" data-count="unread">0</span>
+          </button>
+        </nav>
+      </aside>
+
+      <section aria-labelledby="reportsTitle">
+        <div class="card-head">
+          <h2 id="reportsTitle">Submitted Reports</h2>
+        </div>
+
+        <div class="toolbar">
+          <label class="visually-hidden" for="search">Search reports</label>
+          <input class="search" id="search" type="search" placeholder="Search title, description or project" autocomplete="off">
+          <label class="visually-hidden" for="filterProject">Filter by project</label>
+          <select id="filterProject"></select>
+          <button class="btn btn-secondary btn-sm" id="clearFilters" type="button">Clear</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Project</th>
+                <th scope="col">Title</th>
+                <th scope="col">Submitted</th>
+                <th scope="col">Status</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="reportRows"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">iSynergies Inc. — We make IT possible</div>
+  </footer>
+
+  <!-- Report details -->
+  <dialog id="reportDialog" aria-labelledby="dlgTitle">
+    <div class="dialog-card">
+      <div class="card-head">
+        <h2 id="dlgTitle">Report</h2>
+        <button class="btn btn-ghost btn-sm" id="dlgClose" type="button">Close</button>
+      </div>
+
+      <div class="dialog-meta" id="dlgMeta"></div>
+      <p class="dialog-text" id="dlgText"></p>
+
+      <h3>Conversation</h3>
+      <div id="dlgThread"></div>
+
+      <div class="field">
+        <label for="dlgReply">Reply to client</label>
+        <textarea id="dlgReply" rows="3" placeholder="Write a response&hellip;"></textarea>
+      </div>
+
+      <div class="dlg-actions">
+        <button class="btn btn-primary btn-sm" id="dlgSend" type="button">Reply</button>
+        <button class="btn btn-secondary btn-sm" id="dlgToggle" type="button">Mark resolved</button>
+        <span class="spacer"></span>
+        <button class="btn btn-danger-ghost btn-sm" id="dlgDelete" type="button">Delete report</button>
+      </div>
+    </div>
+  </dialog>
 
   <script>
-    function formatDateTime(iso) {
-      const d = new Date(iso);
-      return d.toLocaleString();
+    // ---- Dashboard state ----
+    const filters = { status: "all", q: "", project: "all" };
+    let activeReportId = null;
+    let noticeDismissed = false;
+
+    const loginView = document.getElementById("loginView");
+    const adminView = document.getElementById("adminView");
+    const loginMsg = document.getElementById("loginMsg");
+    const notice = document.getElementById("notice");
+    const noticeText = document.getElementById("noticeText");
+    const searchInput = document.getElementById("search");
+    const projectFilter = document.getElementById("filterProject");
+    const reportRows = document.getElementById("reportRows");
+    const dialog = document.getElementById("reportDialog");
+    const dlgReply = document.getElementById("dlgReply");
+
+    function formatDate(iso) {
+      const date = new Date(iso);
+      if (isNaN(date.getTime())) return "";
+      return date.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      });
     }
 
-    function renderThread(report, viewer) {
-      const ul = document.createElement("ul");
-      for (const msg of report.thread) {
-        const li = document.createElement("li");
-        const prefix = msg.from === "admin" ? "Administrator: " : "Client: ";
-        li.textContent = prefix + msg.text + " (" + formatDateTime(msg.at) + ")";
-        if (viewer === "admin" && msg.at) {
-          const delBtn = document.createElement("button");
-          delBtn.textContent = " Delete";
-          delBtn.addEventListener("click", function () {
-            if (confirm("Delete this reply?")) {
-              deleteReply(report.id, msg.at, msg.from);
-              render();
-            }
-          });
-          li.appendChild(delBtn);
-        }
-        ul.appendChild(li);
-      }
-      if (report.thread.length === 0) {
-        const li = document.createElement("li");
-        li.textContent = "(No conversation yet)";
-        ul.appendChild(li);
-      }
-      return ul;
+    function sortedReports() {
+      return loadData().reports.slice().reverse();
     }
 
-    function reportTitle(report) {
-      let text = "Report #" + report.id + " [" + (report.resolved ? "Resolved" : "Unresolved") + "] " + formatDateTime(report.createdAt);
-      if (!isSeen(report.id)) {
-        text += " [UNREAD]";
-      }
-      return text;
+    function activeReport() {
+      if (activeReportId === null) return null;
+      const report = loadData().reports.find(function (r) {
+        return r.id === activeReportId;
+      });
+      return report || null;
     }
 
-    function updateUnread() {
-      const count = unreadCount();
-      const p = document.getElementById("unread");
-      if (count === 0) {
-        p.textContent = "Unread new reports: 0";
+    // ---- Filter controls ----
+
+    function populateProjectFilter() {
+      const current = projectFilter.value || "all";
+      projectFilter.textContent = "";
+      const all = document.createElement("option");
+      all.value = "all";
+      all.textContent = "All projects";
+      projectFilter.appendChild(all);
+      for (const project of PROJECTS) {
+        const option = document.createElement("option");
+        option.value = project;
+        option.textContent = project;
+        projectFilter.appendChild(option);
+      }
+      projectFilter.value = current;
+    }
+
+    function setActiveFilter(status) {
+      filters.status = status;
+      for (const button of document.querySelectorAll(".sidenav button")) {
+        button.setAttribute(
+          "aria-current",
+          button.dataset.filter === status ? "true" : "false"
+        );
+      }
+      render();
+    }
+
+    for (const button of document.querySelectorAll(".sidenav button")) {
+      button.addEventListener("click", function () {
+        setActiveFilter(button.dataset.filter);
+      });
+    }
+
+    searchInput.addEventListener("input", function () {
+      filters.q = searchInput.value;
+      render();
+    });
+
+    projectFilter.addEventListener("change", function () {
+      filters.project = projectFilter.value;
+      render();
+    });
+
+    document.getElementById("clearFilters").addEventListener("click", function () {
+      searchInput.value = "";
+      projectFilter.value = "all";
+      filters.q = "";
+      filters.project = "all";
+      setActiveFilter("all");
+    });
+
+    // ---- Rendering ----
+
+    function updateCounts(reports) {
+      const counts = statusCounts(reports);
+      for (const element of document.querySelectorAll("[data-count]")) {
+        element.textContent = counts[element.dataset.count];
+      }
+
+      if (counts.unread > 0 && !noticeDismissed) {
+        notice.hidden = false;
+        noticeText.textContent =
+          counts.unread +
+          (counts.unread === 1
+            ? " new report awaiting review"
+            : " new reports awaiting review");
       } else {
-        p.textContent = "Unread new reports: " + count;
+        notice.hidden = true;
       }
     }
 
-    function buildReportItem(report) {
-      const li = document.createElement("li");
+    function buildCell(label, value, className) {
+      const cell = document.createElement("td");
+      cell.dataset.label = label;
+      if (className) cell.className = className;
+      cell.textContent = value;
+      return cell;
+    }
 
+    function buildRow(report) {
+      const row = document.createElement("tr");
+
+      row.appendChild(buildCell("ID", String(report.id)));
+
+      row.appendChild(buildCell("Project", reportProject(report)));
+
+      const titleCell = document.createElement("td");
+      titleCell.dataset.label = "Title";
       const title = document.createElement("p");
+      title.className = "title";
       title.textContent = reportTitle(report);
-      li.appendChild(title);
+      titleCell.appendChild(title);
 
-      const delReportBtn = document.createElement("button");
-      delReportBtn.textContent = "Delete report";
-      delReportBtn.addEventListener("click", function () {
-        if (confirm("Delete this report and its whole conversation? This cannot be undone.")) {
-          deleteReport(report.id);
-          render();
-        }
-      });
-      const delLine = document.createElement("p");
-      delLine.appendChild(delReportBtn);
-      li.appendChild(delLine);
-
-      // View report details
-      const details = document.createElement("details");
-      const summary = document.createElement("summary");
-      summary.textContent = "View report details";
-      details.appendChild(summary);
-
-      // Opening the report counts as reading it: clears [UNREAD],
-      // updates the counter without a full re-render (which would close it).
-      details.addEventListener("toggle", function () {
-        if (details.open && !isSeen(report.id)) {
-          markSeen(report.id);
-          title.textContent = reportTitle(report);
-          updateUnread();
-        }
-      });
-
-      const bodyLabel = document.createElement("p");
-      bodyLabel.textContent = "Report text:";
-      details.appendChild(bodyLabel);
-
-      const body = document.createElement("p");
-      body.textContent = report.text;
-      details.appendChild(body);
-
-      const threadLabel = document.createElement("p");
-      threadLabel.textContent = "Conversation:";
-      details.appendChild(threadLabel);
-
-      details.appendChild(renderThread(report, "admin"));
-
-      const responseBox = document.createElement("textarea");
-      responseBox.rows = 3;
-      responseBox.cols = 50;
-      details.appendChild(responseBox);
-
-      const responseBtn = document.createElement("button");
-      responseBtn.textContent = "Send";
-      responseBtn.addEventListener("click", function () {
-        const text = responseBox.value.trim();
-        if (text.length === 0) return;
-        addReply(report.id, "admin", text);
-        render();
-      });
-      const sendLine = document.createElement("p");
-      sendLine.appendChild(responseBtn);
-      details.appendChild(sendLine);
-
-      // Resolve controls
-      const resolveLine = document.createElement("p");
-      if (report.resolved) {
-        const markBtn = document.createElement("button");
-        markBtn.textContent = "Mark unresolved";
-        markBtn.addEventListener("click", function () {
-          setResolved(report.id, false);
-          render();
-        });
-        resolveLine.appendChild(markBtn);
-      } else {
-        const markBtn = document.createElement("button");
-        markBtn.textContent = "Mark resolved";
-        markBtn.addEventListener("click", function () {
-          setResolved(report.id, true);
-          render();
-        });
-        resolveLine.appendChild(markBtn);
+      const tags = document.createElement("div");
+      tags.className = "pills";
+      const typeTag = document.createElement("span");
+      typeTag.className = "tag";
+      typeTag.textContent = reportTypeLabel(report);
+      tags.appendChild(typeTag);
+      if (!isSeen(report.id)) {
+        const unread = document.createElement("span");
+        unread.className = "pill pill-new";
+        unread.textContent = "NEW";
+        tags.appendChild(unread);
       }
-      details.appendChild(resolveLine);
+      titleCell.appendChild(tags);
+      row.appendChild(titleCell);
 
-      li.appendChild(details);
-      return li;
+      row.appendChild(buildCell("Submitted", formatDate(report.createdAt)));
+
+      const statusCell = document.createElement("td");
+      statusCell.dataset.label = "Status";
+      const status = document.createElement("span");
+      status.className = "pill " + (report.resolved ? "pill-resolved" : "pill-open");
+      status.textContent = report.resolved ? "Resolved" : "Open";
+      statusCell.appendChild(status);
+      row.appendChild(statusCell);
+
+      const actionsCell = document.createElement("td");
+      actionsCell.dataset.label = "Actions";
+      actionsCell.className = "actions";
+      const actions = document.createElement("div");
+      actions.className = "actions-inner";
+
+      const openButton = document.createElement("button");
+      openButton.type = "button";
+      openButton.className = "btn btn-secondary btn-sm";
+      openButton.textContent = "Open";
+      openButton.addEventListener("click", function () {
+        openReport(report.id);
+      });
+      actions.appendChild(openButton);
+
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "btn btn-danger-ghost btn-sm";
+      deleteButton.textContent = "Delete";
+      deleteButton.addEventListener("click", function () {
+        if (
+          confirm(
+            "Delete this report and its whole conversation? This cannot be undone."
+          )
+        ) {
+          deleteReport(report.id);
+          if (activeReportId === report.id) closeDialog();
+          render();
+        }
+      });
+      actions.appendChild(deleteButton);
+
+      actionsCell.appendChild(actions);
+      row.appendChild(actionsCell);
+
+      return row;
+    }
+
+    function renderRows(reports) {
+      reportRows.textContent = "";
+      const visible = filterReports(reports, filters);
+
+      if (visible.length === 0) {
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+        cell.colSpan = 6;
+        cell.className = "cell-empty";
+        cell.textContent =
+          reports.length === 0
+            ? "No reports yet. Client submissions will appear here."
+            : "No reports match these filters.";
+        row.appendChild(cell);
+        reportRows.appendChild(row);
+        return;
+      }
+
+      for (const report of visible) {
+        reportRows.appendChild(buildRow(report));
+      }
     }
 
     function render() {
-      const data = loadData();
-      const reportList = document.getElementById("reportList");
-      reportList.textContent = "";
-      const reports = data.reports.slice().reverse();
-      for (const report of reports) {
-        reportList.appendChild(buildReportItem(report));
-      }
-      if (reports.length === 0) {
-        const li = document.createElement("li");
-        li.textContent = "(No reports yet)";
-        reportList.appendChild(li);
-      }
-      updateUnread();
+      if (adminView.hidden) return;
+      const reports = sortedReports();
+      updateCounts(reports);
+      renderRows(reports);
     }
 
-    // Keep in sync with client page changes
-    onDataChange(render);
-    LGO.renderLogo(document.getElementById("logo"));
+    // ---- Report dialog ----
+
+    function renderDialog() {
+      const report = activeReport();
+      if (!report) {
+        if (dialog.open) dialog.close();
+        return;
+      }
+
+      document.getElementById("dlgTitle").textContent = reportTitle(report);
+
+      const meta = document.getElementById("dlgMeta");
+      meta.textContent = "";
+      const metaText = document.createElement("span");
+      metaText.className = "meta";
+      metaText.textContent =
+        reportProject(report) +
+        " \u00b7 " +
+        reportTypeLabel(report) +
+        " \u00b7 " +
+        formatDateTime(report.createdAt) +
+        " \u00b7 #" +
+        report.id;
+      meta.appendChild(metaText);
+      const status = document.createElement("span");
+      status.className = "pill " + (report.resolved ? "pill-resolved" : "pill-open");
+      status.textContent = report.resolved ? "Resolved" : "Open";
+      meta.appendChild(status);
+
+      document.getElementById("dlgText").textContent = report.text;
+
+      const threadContainer = document.getElementById("dlgThread");
+      threadContainer.textContent = "";
+      threadContainer.appendChild(
+        buildThreadList(report, "admin", function (message) {
+          if (confirm("Delete this reply?")) {
+            deleteReply(report.id, message.at, message.from);
+            renderDialog();
+            render();
+          }
+        })
+      );
+
+      document.getElementById("dlgToggle").textContent = report.resolved
+        ? "Reopen report"
+        : "Mark resolved";
+      document.getElementById("dlgDelete").textContent = "Delete report";
+    }
+
+    function openReport(id) {
+      activeReportId = id;
+      markSeen(id);
+      render();
+      dlgReply.value = "";
+      renderDialog();
+      if (!dialog.open) dialog.showModal();
+    }
+
+    function closeDialog() {
+      activeReportId = null;
+      if (dialog.open) dialog.close();
+    }
+
+    document.getElementById("dlgClose").addEventListener("click", closeDialog);
+
+    dialog.addEventListener("close", function () {
+      activeReportId = null;
+    });
+
+    document.getElementById("dlgSend").addEventListener("click", function () {
+      const report = activeReport();
+      if (!report) return;
+      const text = dlgReply.value.trim();
+      if (text.length === 0) {
+        dlgReply.focus();
+        return;
+      }
+      addReply(report.id, "admin", text);
+      dlgReply.value = "";
+      renderDialog();
+      render();
+    });
+
+    document.getElementById("dlgToggle").addEventListener("click", function () {
+      const report = activeReport();
+      if (!report) return;
+      setResolved(report.id, !report.resolved);
+      renderDialog();
+      render();
+    });
+
+    document.getElementById("dlgDelete").addEventListener("click", function () {
+      const report = activeReport();
+      if (!report) return;
+      if (
+        confirm(
+          "Delete this report and its whole conversation? This cannot be undone."
+        )
+      ) {
+        deleteReport(report.id);
+        closeDialog();
+        render();
+      }
+    });
+
+    document.getElementById("noticeClose").addEventListener("click", function () {
+      noticeDismissed = true;
+      notice.hidden = true;
+    });
+
+    // Keep in sync with client page changes.
+    onDataChange(function () {
+      render();
+      if (activeReportId !== null && dialog.open) renderDialog();
+    });
 
     // ---- Login gate ----
-    const loginDiv = document.getElementById("login");
-    const adminUIDiv = document.getElementById("adminUI");
-    const loginMsg = document.getElementById("loginMsg");
 
     function showLogin() {
-      loginDiv.hidden = false;
-      adminUIDiv.hidden = true;
+      loginView.hidden = false;
+      adminView.hidden = true;
       document.getElementById("whoami").textContent = "";
       loginMsg.textContent = "";
     }
 
     function showAdminUI() {
-      loginDiv.hidden = true;
-      adminUIDiv.hidden = false;
-      document.getElementById("whoami").textContent = currentUser();
+      loginView.hidden = true;
+      adminView.hidden = false;
+      const user = currentUser() || "";
+      document.getElementById("whoami").textContent = user;
+      document.getElementById("avatar").textContent = user
+        ? user.charAt(0).toUpperCase()
+        : "A";
       render();
     }
 
@@ -233,18 +537,24 @@
       } else {
         loginMsg.textContent = "Wrong username or password.";
         passEl.value = "";
+        passEl.focus();
       }
     }
 
-    document.getElementById("loginBtn").addEventListener("click", attemptLogin);
-    document.getElementById("loginPass").addEventListener("keydown", function (e) {
-      if (e.key === "Enter") attemptLogin();
+    document.getElementById("loginForm").addEventListener("submit", function (event) {
+      event.preventDefault();
+      attemptLogin();
     });
-    document.getElementById("logoutBtn").addEventListener("click", function () { endAdminSession(); showLogin(); });
-    document.getElementById("logoutBtn2").addEventListener("click", function () { endAdminSession(); showLogin(); });
-    document.getElementById("homeBtn").addEventListener("click", function () { window.location.href = "index.html"; });
 
-    // Start state: logged in? show admin UI; otherwise show login.
+    document.getElementById("logoutBtn").addEventListener("click", function () {
+      endAdminSession();
+      closeDialog();
+      showLogin();
+    });
+
+    LGO.renderLogo(document.getElementById("logo"), 32);
+    populateProjectFilter();
+
     if (adminSessionActive()) {
       showAdminUI();
     } else {
