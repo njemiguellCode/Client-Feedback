@@ -146,6 +146,16 @@
         <textarea id="dlgReply" rows="3" placeholder="Write a response&hellip;"></textarea>
       </div>
 
+      <div class="field">
+        <label for="dlgFix">Fix note (shown to the client)</label>
+        <textarea id="dlgFix" rows="2" placeholder="What was fixed, and where?"></textarea>
+        <div class="fix-actions">
+          <button class="btn btn-secondary btn-sm" id="dlgPublishFix" type="button">Publish fix</button>
+          <button class="btn btn-danger-ghost btn-sm" id="dlgRemoveFix" type="button" hidden>Remove fix</button>
+        </div>
+        <p class="hint" id="dlgFixMsg" role="status" aria-live="polite"></p>
+      </div>
+
       <div class="dlg-actions">
         <button class="btn btn-primary btn-sm" id="dlgSend" type="button">Reply</button>
         <button class="btn btn-secondary btn-sm" id="dlgToggle" type="button">Mark resolved</button>
@@ -171,6 +181,9 @@
     const reportRows = document.getElementById("reportRows");
     const dialog = document.getElementById("reportDialog");
     const dlgReply = document.getElementById("dlgReply");
+    const dlgFix = document.getElementById("dlgFix");
+    const dlgFixMsg = document.getElementById("dlgFixMsg");
+    const dlgRemoveFix = document.getElementById("dlgRemoveFix");
 
     function formatDate(iso) {
       const date = new Date(iso);
@@ -425,6 +438,12 @@
         })
       );
 
+      dlgFix.value = report.fix ? report.fix.text : "";
+      dlgRemoveFix.hidden = !report.fix;
+      dlgFixMsg.textContent = report.fix
+        ? "Published " + formatDateTime(report.fix.at) + "."
+        : "";
+
       document.getElementById("dlgToggle").textContent = report.resolved
         ? "Reopen report"
         : "Mark resolved";
@@ -463,6 +482,32 @@
       dlgReply.value = "";
       renderDialog();
       render();
+    });
+
+    document.getElementById("dlgPublishFix").addEventListener("click", function () {
+      const report = activeReport();
+      if (!report) return;
+      const text = dlgFix.value.trim();
+      if (text.length === 0) {
+        dlgFixMsg.textContent = "Write the fix before publishing.";
+        dlgFix.focus();
+        return;
+      }
+      publishFix(report.id, text);
+      renderDialog();
+      render();
+      dlgFixMsg.textContent = "Fix published to the client.";
+    });
+
+    dlgRemoveFix.addEventListener("click", function () {
+      const report = activeReport();
+      if (!report || !report.fix) return;
+      if (confirm("Remove the published fix from this report?")) {
+        clearFix(report.id);
+        renderDialog();
+        render();
+        dlgFixMsg.textContent = "Fix removed.";
+      }
     });
 
     document.getElementById("dlgToggle").addEventListener("click", function () {
