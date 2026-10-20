@@ -12,6 +12,7 @@
 //     type: "bug" | "feedback",
 //     createdAt: <ISO string>,
 //     resolved: <bool>,
+//     fix: { text: <string>, at: <ISO string> } | null,
 //     thread: [ { from: "client" | "admin", text: <string>, at: <ISO string> } ]
 //   } ]
 // }
@@ -28,8 +29,18 @@ const TITLE_MAX = 70;
 
 // ---------- Read / write ----------
 
-// Older saved reports predate project and type, so fill sane defaults in
-// memory instead of blanking the interface.
+// Published fix notes are optional; older reports have none.
+function normalizeFix(fix) {
+  if (!fix || typeof fix !== "object") return null;
+  if (typeof fix.text !== "string" || fix.text.trim().length === 0) return null;
+  return {
+    text: fix.text,
+    at: typeof fix.at === "string" ? fix.at : ""
+  };
+}
+
+// Older saved reports predate project, type and fix notes, so fill sane
+// defaults in memory instead of blanking the interface.
 function normalizeReport(report) {
   const thread = Array.isArray(report.thread) ? report.thread : [];
   return {
@@ -42,6 +53,7 @@ function normalizeReport(report) {
     type: report.type === "bug" ? "bug" : "feedback",
     createdAt: report.createdAt || new Date().toISOString(),
     resolved: report.resolved === true,
+    fix: normalizeFix(report.fix),
     thread: thread
   };
 }
@@ -91,6 +103,7 @@ function addReport(text, project, type) {
     type: type === "feedback" ? "feedback" : "bug",
     createdAt: new Date().toISOString(),
     resolved: false,
+    fix: null,
     thread: []
   };
   data.reports.push(report);
@@ -127,6 +140,31 @@ function deleteReport(reportId) {
   });
   if (index === -1) return false;
   data.reports.splice(index, 1);
+  saveData(data);
+  return true;
+}
+
+// Publish or replace the fix note the client sees for this report.
+function publishFix(reportId, text) {
+  const data = loadData();
+  const report = data.reports.find(function (r) {
+    return r.id === reportId;
+  });
+  if (!report || typeof text !== "string" || text.trim().length === 0) {
+    return false;
+  }
+  report.fix = { text: text.trim(), at: new Date().toISOString() };
+  saveData(data);
+  return true;
+}
+
+function clearFix(reportId) {
+  const data = loadData();
+  const report = data.reports.find(function (r) {
+    return r.id === reportId;
+  });
+  if (!report) return false;
+  report.fix = null;
   saveData(data);
   return true;
 }
