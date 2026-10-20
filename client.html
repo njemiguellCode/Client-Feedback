@@ -64,6 +64,13 @@
             <p class="hint" id="formMsg" role="status" aria-live="polite"></p>
           </form>
         </section>
+
+        <section class="card" aria-labelledby="fixesTitle">
+          <div class="card-head">
+            <h2 id="fixesTitle">Published Fixes</h2>
+          </div>
+          <div id="fixes"></div>
+        </section>
       </div>
 
       <div>
@@ -103,7 +110,11 @@
           </details>
           <details>
             <summary>What does "Resolved" mean?</summary>
-            <p>The administrator has marked the report as handled.</p>
+            <p>The administrator has marked the report as handled. Any fix note they publish appears under Published Fixes.</p>
+          </details>
+          <details>
+            <summary>Where do I see published fixes?</summary>
+            <p>When an administrator publishes a fix note for a report, it appears under Published Fixes and on the report card in My Feedback History.</p>
           </details>
           <details>
             <summary>Why is my report unanswered?</summary>
@@ -207,6 +218,16 @@
         preview.appendChild(label);
         preview.appendChild(document.createTextNode(previewText(latest.text)));
         card.appendChild(preview);
+      }
+
+      if (report.fix) {
+        const fix = document.createElement("p");
+        fix.className = "report-preview report-fix";
+        const fixLabel = document.createElement("strong");
+        fixLabel.textContent = "Fix published: ";
+        fix.appendChild(fixLabel);
+        fix.appendChild(document.createTextNode(report.fix.text));
+        card.appendChild(fix);
       }
 
       const details = document.createElement("details");
@@ -375,8 +396,62 @@
       container.appendChild(list);
     }
 
+    function renderFixes() {
+      const container = document.getElementById("fixes");
+      container.textContent = "";
+
+      const reports = loadData()
+        .reports.filter(function (report) {
+          return report.fix;
+        })
+        .sort(function (a, b) {
+          return new Date(b.fix.at) - new Date(a.fix.at);
+        });
+
+      if (reports.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "empty";
+        empty.textContent = "No fixes published yet.";
+        container.appendChild(empty);
+        return;
+      }
+
+      const list = document.createElement("ul");
+      list.className = "thread";
+      for (const report of reports) {
+        const entry = document.createElement("li");
+        entry.className = "msg msg-fix";
+
+        const head = document.createElement("div");
+        head.className = "msg-head";
+        const author = document.createElement("span");
+        author.className = "msg-author";
+        author.textContent = "Administrator";
+        head.appendChild(author);
+        const time = document.createElement("span");
+        time.textContent = formatDateTime(report.fix.at);
+        head.appendChild(time);
+        entry.appendChild(head);
+
+        const text = document.createElement("p");
+        text.className = "msg-text";
+        text.textContent = report.fix.text;
+        entry.appendChild(text);
+
+        const subject = document.createElement("p");
+        subject.className = "meta";
+        subject.style.marginTop = "6px";
+        subject.textContent = "Fix for: " + reportTitle(report);
+        entry.appendChild(subject);
+
+        list.appendChild(entry);
+      }
+      container.appendChild(list);
+    }
+
     function render() {
       renderHistory();
+      renderFixes();
       renderResponses();
     }
 

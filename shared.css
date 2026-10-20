@@ -633,6 +633,15 @@ select {
   font-weight: 600;
 }
 
+.report-fix {
+  background: var(--green-soft);
+  border-color: rgba(47, 125, 79, 0.18);
+}
+
+.report-fix strong {
+  color: var(--green);
+}
+
 .report-actions {
   display: flex;
   justify-content: flex-end;
@@ -697,6 +706,11 @@ select {
   border-color: rgba(44, 107, 149, 0.18);
 }
 
+.msg-fix {
+  background: var(--green-soft);
+  border-color: rgba(47, 125, 79, 0.18);
+}
+
 .msg-head {
   display: flex;
   align-items: center;
@@ -713,6 +727,17 @@ select {
 
 .msg-admin .msg-author {
   color: var(--accent-strong);
+}
+
+.msg-fix .msg-author {
+  color: var(--green);
+}
+
+.fix-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
 }
 
 .msg-text {
